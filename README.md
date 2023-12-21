@@ -26,198 +26,32 @@ This is even more of a work in progress than `PyShiftAE`.
     - [Acknowledgements](https://github.com/Trentonom0r3/PyShiftAE/blob/main/CONTRIBUTING.md#acknowledgements)
       - All contributors will be acknowledged in the project repository. Your contributions, no matter how small, are valuable to us and the community.
 
-## Example Ideas
-- Within PyShiftCore:
-  ```python
-    class Manifest:
-    #list valid version of AE. Technically it is AE2016, AE2017, AE2018, AE2019, AE2020, AE2021, AE2022, AE2023, and up, but
-    # we need a simpler way to convey that
-    AE_MIN = 2000 # DO NOT CHANGE
-    AE_MAX = 3000 # DO NOT CHANGE
-    PYTHON_DEFAULT = "3.11" # DO NOT CHANGE
-    PATH = os.path.dirname(os.path.realpath(__file__))
-    def __init__(self, name = None, version = None, author = None,
-                 description = None, AE_VERS = None, PY_VERS = None, 
-                 main = None, ui = None, resources = None, dependencies = None, extras = None):
-        
-        # Basic Information
-        self.name = "YourPluginName"
-        self.version = "1.0.0"
-        self.author = "Your Name"
-        self.description = "Brief description of what your plugin does."
-        self.size = (300, 300) # Size of the UI window. Default is (300, 300)
-        self.resizable = True # Whether the UI window is resizable. Default is False
-        # Compatibility Information
-        self.AE_VERS = ["AE2021", "AE2022"] #Default, will automatically define range of AE versions, not require to define
-                                            # by user, unlike CEP manifests.
-        self.PY_VERS = self.PYTHON_DEFAULT  # Default, unless you built PyShiftCore from source. 
-
-        # Path Information, relative to the manifest file
-        self.main = "path/to/main_script.py"  # Path to the main Python script
-        self.ui = "path/to/ui_script.py"      # Path to the UI Python script. If None, no UI will be loaded.
-        self.resources = "path/to/resources"  # Folder for additional resources
-
-        # Dependencies
-        self.dependencies = ["numpy", "opencv-python"]  # List of required Python libraries
-        self.extras = ["path/to/additional/file1", "path/to/additional/file2"]
-
-        # Advanced Settings           
-        self.cache = True  # Indicate the user will be caching data, so the manifest will know to create a cache folder
-        self.cache_path = "path/to/cache"  # Path to the cache folder. Where the manifest will create the cache
-        self.cache_size = 100  # Size of the cache in MB. Default is 100MB
-        self.cache_max = 1000  # Maximum size of the cache in MB. Default is 1000MB
-        self.cache_clear_when_full = True  # Clear the cache when it is full. Default is True
-
-    # You can add methods to validate, load, or process the manifest information
-    def _validate_versions(self):
-        # Validate AE versions
-        for version in self.AE_VERS:
-            if not self.AE_MIN <= int(version[2:]) <= self.AE_MAX:
-                raise ValueError("Invalid AE version: {}".format(version))
-
-        # Validate Python version
-        if not self.PY_VERS.startswith("3."):
-            raise ValueError("Invalid Python version: {}".format(self.PY_VERS))
-
-    def _validate_paths(self):
-        #validate PATH
-        if not os.path.exists(self.PATH):
-            raise ValueError("Invalid path to manifest: {}".format(self.PATH))
-        
-        if not os.path.exists(self.main):
-            raise ValueError("Invalid path to main script: {}".format(self.main))
-        
-        if self.ui is not None and not os.path.exists(self.ui):
-            raise ValueError("Invalid path to UI script: {}".format(self.ui))
-        
-        if not os.path.exists(self.resources):
-            raise ValueError("Invalid path to resources: {}".format(self.resources))
-        
-        for extra in self.extras:
-            if not os.path.exists(extra):
-                raise ValueError("Invalid path to extra file: {}".format(extra))
-            
-            
-    def _validate_dependencies(self):
-        #validate dependencies
-        for dependency in self.dependencies:
-            try:
-                __import__(dependency)
-            except ImportError:
-                raise ValueError("Missing dependency: {}".format(dependency))
-            
-    def validate(self):
-        self._validate_versions()
-        self._validate_paths()
-        self._validate_dependencies()
-        return True
+## Usage :
+    - To Create a `CEP` Extension that uses Python as opposed to extendscript, there are a few steps you must take.
+        - First, Ensure you have the latest version of ```PyShiftAE``` installed, and python 3.11 on your system's path.
+        - Secondly, clone this repo, and run ```build.py```.
+            - ```build.py``` will walk you through setting up your extension's Manifest, and then generate your initial structure. This structure (and the file names) should not be changed, but the contents/details can be. 
+        - At this point, you have a directory set up containing ```manifest.py```, ```entry.py```, and ```PyShiftCore.pyi```
+            - If you need to make any changes to your manifest (such as new dependencies), and them there.
+            - ```entry.py``` is where you define all of your functions for use. It is recommended NOT to use global variables here. Instead, use ```entry.py``` as your function definition "bridge". For utilities, I recommend separating into a different file, then importing into ```entry.py```. It keeps things clean, and makes debugging easier for you. The boilerplate code created for you contains comments detailing structure and format you should try and maintain, as well as points where you shouldn't really mess with things. 
+            - Provided as part of ```PyShiftAE```, is a built-in debug console. All python stdout and stderr is redirected to this window, when open. Find it under ```Window``` -> ```Python Console```. Read Only. 
     
-    def load(self):
-        if self.ui is not None:
-            # Extract the filename without the extension
-            ui_module_name = os.path.splitext(os.path.basename(self.ui))[0]
-            main_module_name = os.path.splitext(os.path.basename(self.main))[0]
+        - Provided all previous steps were completed successfully, you are now set up to integrate python with your CEP extension. 
+            - To do this, utilize the ```PyInterface.ts``` file from this repo in your CEP extension.
+            - Add your `comp.psc.EXTENSIONNAME` folder into your CEP folder, and make sure it is placed at the common CEP location: `C:\Program Files (x86)\Common Files\Adobe\CEP\extensions` 
+            - ```PyInterface``` will communicate with ```PyShiftAE``` as necessary, and will return results to the user as strings.
+                - (It is up to the user to convert to numbers, etc, as needed).
+            - ```PyInterface```  uses a structure that will seem somewhat familiar to users of ```CSInterface.js.```
+                - Example Usage:
+                ```js
+                const callpy = async () =>{
+                    const pyi = new PyInterface('ABCD'); //Create the PyInterface using your Manifest.Name.
+                    await pyi.connect(); //Connect to the plugin.
 
-            # Load and import the ui module
-            spec = importlib.util.spec_from_file_location(ui_module_name, self.ui)
-            ui_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(ui_module)
+                    // Sync call
+                    const result = await pyi.evalPy('say_hello'); //Follows the signature pyi.evalPy('FUNCTIONNAME', arg1, arg2, arg3,...)
+                    console.log(result);
+                }
+                ```
 
-            # Load and import the main module
-            spec = importlib.util.spec_from_file_location(main_module_name, self.main)
-            main_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(main_module)
-                
-        pass
-    
-  class Entry:
-      def __init__(self, manifest: Manifest):
-          self.manifest = manifest
-          self.cache = Cache(manifest.cache_path)
-  
-       
-  class Cache:
-      def __init__(self, path):
-          self.path = path
-          self.min_size = 100
-          self.max_size = 1000
-          self.clear_when_full = True
-
-    def __setattr__(self, name, value):
-        self.__dict__[name] = value
-    
-    def __getattr__(self, name):
-        return self.__dict__[name]
-   ```
-  
-- From the User side:
-   ```python
-   class TKEntry(Entry):
-      def __init__(self, manifest: Manifest):
-          super().__init__(manifest)
-          self.root = Tk()
-          self.root.title(manifest.name)
-          self.root.geometry("{}x{}".format(manifest.size[0], manifest.size[1]))
-          self.root.resizable(manifest.resizable, manifest.resizable)
-          # add slider
-          # add buttons
-          self.buttons = []
-          self.sliders = []
-          
-      def add_button(self, name, command):
-          button = tkinter.Button(self.root, text=name, command=command)
-          button.pack()
-          self.buttons.append(button)
-          
-      def add_slider(self, name, min, max, default):
-          slider = tkinter.Scale(self.root, from_=min, to=max, orient=tkinter.HORIZONTAL)
-          slider.pack()
-          self.sliders.append(slider)
-          
-      #create a text entry
-      def add_text(self, name):
-          text = tkinter.Entry(self.root)
-          text.pack()
-          self.texts.append(text)
-          
-      def get_text(self, name):
-          for text in self.texts:
-              if text.cget("text") == name:
-                  return text.get()
-                  break
-          return None
-      
-      def set_slider(self, name, value):
-          for slider in self.sliders:
-              if slider.cget("text") == name:
-                  slider.set(value)
-                  break
-      
-      def run(self):
-          self.root.mainloop()
-
-  if __name__ == "__main__":
-      def overLOAD():
-          print("overload") # create a function to overload the cache.load function
-        
-      cache = Cache("path/to/cache")
-      cache.load = lambda: overLOAD() # create a new attribute to the cache object
-      cache.save = lambda: print("saving cache") # create a new attribute to the cache object
-      cache.test = "test" # create a new attribute to the cache object
-      
-      manifest = Manifest() # create a manifest object
-      manifest.cache = True # set the cache attribute to True
-      manifest.cache_path = "path/to/cache" # set the cache path
-      manifest.cache_size = 100 # set the cache size
-      manifest.cache_max = 1000 # set the cache max
-      manifest.cache_clear_when_full = True   # set the cache clear when full
-      
-      def add_new_text(text):  # create a function to add a new text entry
-          entry.add_text(text)
-          
-      entry = TKEntry(manifest) # create a TKEntry object
-      entry.add_button("test", add_new_text(entry.get_text("test"))) # add a button to the UI
-      entry.add_slider("test", 0, 100, 50) # add a slider to the UI
-      entry.add_text("test") # add a text entry to the UI
-      entry.run() # run the UI
-    ```
+            - I Highly recommend using BOLT-CEP for development, as it will streamline the process. 
