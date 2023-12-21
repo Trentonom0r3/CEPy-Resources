@@ -32,7 +32,7 @@ This is even more of a work in progress than `PyShiftAE`.
   - Secondly, clone this repo, and run ```build.py```.
     - ```build.py``` will walk you through setting up your extension's Manifest, and then generate your initial structure. This structure (and the file names) should not be changed, but the contents/details can be. 
 - At this point, you have a directory set up containing ```manifest.py```, ```entry.py```, and ```PyShiftCore.pyi```
-  - If you need to make any changes to your manifest (such as new dependencies), and them there.
+  - If you need to make any changes to your manifest (such as new dependencies), add them there.
     - ```entry.py``` is where you define all of your functions for use. It is recommended NOT to use global variables here. Instead, use ```entry.py``` as your function definition "bridge". For utilities, I recommend separating into a different file, then importing into ```entry.py```. It keeps things clean, and makes debugging easier for you. The boilerplate code created for you contains comments detailing structure and format you should try and maintain, as well as points where you shouldn't really mess with things. 
     - Provided as part of ```PyShiftAE```, is a built-in debug console. All python stdout and stderr is redirected to this window, when open. Find it under ```Window``` -> ```Python Console```. Read Only. 
     
